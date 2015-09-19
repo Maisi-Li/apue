@@ -21,3 +21,8 @@ echo "4.two arguments are the same file"
 echo "./a.out ./temp/1.txt ./temp/1.txt"
 ./a.out ./temp/1.txt ./temp/1.txt
 echo \\n
+
+echo "5.two different file"
+echo "./a.out ./temp/1.txt ./temp/2.txt"
+./a.out ./temp/1.txt ./temp/2.txt
+echo \\n
