@@ -15,12 +15,13 @@ int main(int argc, char* argv[]) {
 	ssize_t readIn, writeOut;
 	char buffer[BUFFER_SIZE];
 	struct stat stat1, stat2;
+	char *path1, *path2;
 	if(argc != 3) {
 		fprintf(stderr, "tcp: Usage: %s filename filename\n",argv[0]);
 		exit(1);
 	}
 
-	// Create input file descroptor
+	// Create input file descroptor: argv[1]
 	inputFd = open(argv[1],O_RDONLY);
 	if(inputFd == -1) {
 		fprintf(stderr,"%s: %s: %s\n",
@@ -73,7 +74,17 @@ int main(int argc, char* argv[]) {
 
 
 	}
-
+	else {
+		path1 = realpath(argv[1],NULL);
+		path2 = realpath(argv[2],NULL);
+		if(path1 == NULL || path2 == NULL) {
+			fprintf(stderr,"%s: realpath: %s", argv[0], strerror(errno));
+			exit(7);
+		}					
+		path1 = path1 - strrchr(path1, '/');
+		printf("path1:%s\n",path1);
+		printf("path2:%s\n",path2);
+	}
 
 
 	return(0);

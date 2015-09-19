@@ -1,5 +1,5 @@
 #!/bin/bash
-cc -Wall tcp.c
+cc -Wall new.c
 
 #1. Three arguement
 echo "1.three arguemnts"
@@ -18,11 +18,16 @@ echo "tcp ./temp/1.txt ddd"
 echo \\n
 
 echo "4.two arguments are the same file"
-echo "./a.out ./temp/1.txt ./temp/1.txt"
-./a.out ./temp/1.txt ./temp/1.txt
+echo "./a.out ./temp/1.txt Aboslute path "
+./a.out ./temp/1.txt /home/mli27/apue/hw2/temp/1.txt
 echo \\n
 
 echo "5.two different file"
 echo "./a.out ./temp/1.txt ./temp/2.txt"
 ./a.out ./temp/1.txt ./temp/2.txt
+echo \\n
+
+echo "6. In Same Directory"
+echo "./a.out ./temp/1.txt ./temp/"
+./a.out ./temp/1.txt ./temp
 echo \\n
