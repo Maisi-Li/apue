@@ -160,16 +160,3 @@ char* getFullPath(char *file, char *dir, char *dirf) {
 //	printf("dirf in getFullPath:  %s\n",dirf);
 	return value;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-#include <stdio.h>
