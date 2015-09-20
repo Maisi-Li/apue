@@ -46,13 +46,12 @@ echo \\n
 
 echo "7.copy file to directory"
 echo "./a.out ./temp/1.txt  ./temp/test"
-./a.out ./temp/1.txt ./temp/test/
+./a.out ./temp/1.txt ./temp/test
 echo "finish copy"
-cat ./temp/test/1.txt
 ls -l ./temp/test
+echo "cat the file"
 cat ./temp/test/1.txt
-
-cd ./temp/test
+rm ./temp/test/1.txt
 
 
 
