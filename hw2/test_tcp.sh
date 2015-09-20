@@ -1,5 +1,5 @@
 #!/bin/bash
-cc -Wall new.c
+cc -Wall tcp.c
 
 #1. Three arguement
 echo "1.three arguemnts"

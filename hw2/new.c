@@ -10,7 +10,7 @@
 #define BUFFER_SIZE 4096
 void copyDir(char *file, char *dir);
 void copyFile(char *file1, char *file2);
-char*  getFullPath(char *file, char *dir, char *temp);
+void getFullPath(char *file, char *dir, char *temp);
 
 
 int main(int argc, char* argv[]) {
@@ -40,7 +40,8 @@ int main(int argc, char* argv[]) {
 	//if arg2 is a dir
 	if(S_ISDIR(stat2.st_mode)) {
 		//1. check these two directory is not the same
-		if(stat(getFullPath(argv[1], argv[2],temp),&stat_temp) != -1) {
+		getFullPath(argv[1],argv[2],temp);
+		if(stat(temp,&stat_temp) != -1) {
 			if(stat1.st_ino == stat_temp.st_ino &&
 					 stat1.st_dev == stat_temp.st_dev) {
 				fprintf(stderr, "%s: '%s' and '%s' are the same file", 
@@ -81,23 +82,14 @@ void copyFile(char *file1, char *file2)	{
 	
 }
 
-char*  getFullPath(char *file, char *dir, char *dirf) {
+void  getFullPath(char *file, char *dir, char *dirf) {
 	char *path1 = realpath(file,NULL);
 	char *fileName;
-	char *path2 = realpath(dir,NULL);
-	char *value = (char*) malloc(4096*sizeof(char));
 	char *temp;
 	int idx = 0;
-	fileName = strrchr(path1, '/');
-	temp = &path2[0];
-	while(*temp != '\0')	
-		value[idx++] = *temp++;
-	value[idx] = '\0';
-//	printf("value: %s\n",value);
-	strcat(value,fileName);
-//	printf("return value: %s\n",value);
 
-	printf("2:  %s\n",dirf);
+	fileName = strrchr(path1, '/');
+//	printf("2:  %s\n",dirf);
 	temp = &dir[0];
 	idx = 0;
 	while(*temp != '\0')
@@ -106,7 +98,6 @@ char*  getFullPath(char *file, char *dir, char *dirf) {
 //	printf("First %s\n",dirf);
 	strcat(dirf,fileName);
 //	printf("dirf %s\n",dirf);
-	return value;
 }
 
 
