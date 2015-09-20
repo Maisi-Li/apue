@@ -8,16 +8,13 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #define BUFFER_SIZE 4096
-void copyDir(char *file, char *dir);
-void copyFile(char *file1, char *file2);
+void copyFile(char *argv[]);
+void copyDir(char *file, struct stat *fstat, char *dir);
 void getFullPath(char *file, char *dir, char *temp);
 
 
 int main(int argc, char* argv[]) {
-	int inputFd, outputFd;
-	DIR *outputDir;
-	ssize_t readIn, writeOut;
-	char buffer[BUFFER_SIZE];
+	
 	char *temp = (char*) malloc(4096 *sizeof(char));
 	struct stat stat1, stat2,stat_temp;
 	// only two argument is accepted
@@ -50,10 +47,11 @@ int main(int argc, char* argv[]) {
 			}
 		}	
 		//2.copy
-		copyDir(argv[1], argv[2]);
+	//	printf("stat:%d\n", (int)stat.st_mode);
+		copyDir(argv[1], &stat1,temp);
 	}
 	//if arg2 is a file
-	else if(stat1.st_mode == stat2.st_mode) {
+	else  {
 		//1.check these two file is not the same
 		if(stat1.st_ino == stat2.st_ino && stat1.st_dev == stat2.st_dev) {
 			fprintf(stderr, "%s: '%s' and '%s' are the same file", 
@@ -61,31 +59,80 @@ int main(int argc, char* argv[]) {
 			exit(5);
 		}
 		//2.copy
-		copyFile(argv[1], argv[2]);
+		copyFile(argv);
 	}
-	else {
-		fprintf(stderr, "Cannot copy files with differnt mode\n");
-		exit(4);
-	}			
+			
 	
 
 	//Everything goes well
 	return(0);
 }
 
-void copyDir(char *file, char *dir) {
-
-
+void copyDir(char *file, struct stat *fstat, char *dir) {
+	int inputFd, outputFd;	
+	ssize_t readIn, writeOut;
+	char buffer[BUFFER_SIZE];
+	mode_t t = fstat->st_mode;
+	printf("test temp: %s\n",dir);
+	if((inputFd = open(file,O_RDONLY)) == -1) {
+		fprintf(stderr,"%s: %s: %s\n",
+				"tcp", file, strerror(errno));
+		exit(2);
+	}
+	if((outputFd = open(dir, O_WRONLY | O_CREAT | O_TRUNC) == -1)) {	
+		fprintf(stderr, "%s: %s: %s\n", 
+				"open output: ", dir, strerror(errno));
+		exit(4);
+	}
+	
+		fchmod(outputFd, t);
+	while((readIn = read(inputFd, &buffer, BUFFER_SIZE)) > 0) {
+		writeOut = write(outputFd, &buffer, (ssize_t)readIn);
+		if(writeOut != readIn) {
+			fprintf(stderr,"%s: write error", "tcp");
+			exit(3);
+		}
+		else
+		printf("hahaha\n");
+	}
+	
+	close(inputFd);
+	close(outputFd);
+	
 }
 
-void copyFile(char *file1, char *file2)	{
+void copyFile(char *argv[])	{
+	int inputFd, outputFd;	
+	ssize_t readIn, writeOut;
+	char buffer[BUFFER_SIZE];
+
+	if((inputFd = open(argv[1],O_RDONLY)) == -1) {
+		fprintf(stderr,"%s: %s: %s\n",
+				argv[0], argv[1], strerror(errno));
+		exit(2);
+	}
+	if((outputFd = open(argv[2],O_WRONLY | O_CREAT | O_TRUNC) ) == -1) {
+		fprintf(stderr, "%s: %s: %s",
+				 argv[0], argv[2],strerror(errno));
+		exit(2);
+		}
 	
+	while((readIn = read(inputFd, &buffer, BUFFER_SIZE)) > 0) {
+		writeOut = write(outputFd, &buffer, (ssize_t)readIn);
+		if(writeOut != readIn) {
+			fprintf(stderr,"%s: write error", argv[0]);
+			exit(6);
+		}
+	}
+	close(inputFd);
+//	fchmod(outputFd,0744);
+	close(outputFd);
 }
 
 void  getFullPath(char *file, char *dir, char *dirf) {
 	char *path1 = realpath(file,NULL);
 	char *fileName;
-	char *value = (char*) malloc(4096*sizeof(char));
+
 	char *temp;
 	int idx = 0;
 	fileName = strrchr(path1, '/');

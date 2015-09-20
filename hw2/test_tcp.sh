@@ -24,10 +24,43 @@ echo \\n
 
 echo "5.two different file"
 echo "./a.out ./temp/1.txt ./temp/2.txt"
+echo "This is 1st file" > ./temp/1.txt
+echo "This is 2sd  file" > ./temp/2.txt
+echo "1: "
+cat ./temp/1.txt
+echo "2: "
+cat ./temp/2.txt
 ./a.out ./temp/1.txt ./temp/2.txt
+echo "after"
+echo "1. "
+cat ./temp/1.txt
+echo "2. "
+cat ./temp/2.txt
 echo \\n
 
 echo "6. In Same Directory"
 echo "./a.out ./temp/1.txt ./temp/"
 ./a.out ./temp/1.txt ./temp
 echo \\n
+
+
+echo "7.copy file to directory"
+echo "./a.out ./temp/1.txt  ./temp/test"
+./a.out ./temp/1.txt ./temp/test/
+echo "finish copy"
+cat ./temp/test/1.txt
+ls -l ./temp/test
+cat ./temp/test/1.txt
+
+cd ./temp/test
+
+
+
+
+
+
+
+
+
+
+
