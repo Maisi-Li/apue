@@ -1,5 +1,5 @@
 #!/bin/bash
-cc -Wall tcp.c
+cc -Wall tcpm.c
 
 #1. Three arguement
 echo "1.three arguemnts"
@@ -47,12 +47,26 @@ echo \\n
 echo "7.copy file to directory"
 echo "./a.out ./temp/1.txt  ./temp/test"
 ./a.out ./temp/1.txt ./temp/test
-echo "finish copy"
+
 ls -l ./temp/test
 echo "cat the file"
 cat ./temp/test/1.txt
 rm ./temp/test/1.txt
+echo \\n
 
+
+echo "8.copy file to directory where the file exist but not the same"
+echo "./a.out ./temp/2.txt ./temp/test"
+echo "woca !!!" > ./temp/test/2.txt
+echo "before:"
+cat ./temp/test/2.txt
+echo //n
+./a.out ./temp/2.txt ./temp/test
+echo "ls the file"
+ls -l ./temp/test
+echo "file content"
+cat ./temp/test/2.txt
+echo \\n
 
 
 
