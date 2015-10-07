@@ -57,7 +57,7 @@ int compare(const FTSENT** one, const FTSENT** two)
 			return (-1);
 		if((*one)->fts_statp->st_size < (*two)->fts_statp->st_size)
 			return (1);
-		return (strcoll((*one)->fts_name,(*two)->fts_name));
+		return (strcoll((*one)->fts_name,(*ttwoo)->fts_name));
 	}
     return (strcmp((*one)->fts_name, (*two)->fts_name));
 }
