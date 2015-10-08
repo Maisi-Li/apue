@@ -10,17 +10,18 @@
 #include <unistd.h>
 
 #include "ls.h"
-
+#include "helper.h"
 
 #define	MAXFILES 1024
 
-/*Functions Definition*/
-extern int compare(const FTSENT **, const FTSENT **);
 
-//int	aflg, Aflg, Cflg, cflg, dflg, Fflg, fflg, hflg, iflg, kflg, lflg, nflg;
-//int 	qflg, Rflg, rflg, Sflg, sflg, tflg, uflg, wflg, xflg, oneflg;
 int flg_A = 0;
 int flg_a = 0;
+
+// sorting flag
+SortingMethod flg_sort = sortByName;
+int flg_noSort = 0; 
+int flg_R = 0;
 
 int main(int argc,char *argv[]) {
 
@@ -28,8 +29,7 @@ int main(int argc,char *argv[]) {
         FTSENT *pFtsChildren = NULL;
         FTSENT *pFtsParent = NULL;
         int opt;
-	
-
+	int fts_options = 0;
 
 	// super user
 	if(geteuid() == 0)
@@ -43,12 +43,13 @@ int main(int argc,char *argv[]) {
 		printf("file\n");
 	}
 	
+	fts_options = FTS_PHYSICAL;
         while((opt = getopt(argc, argv, "1ABCFLRSTWabcdfghiklmnopqrstuwx")) != -1) {
                 switch(opt) {
 		case 'c': flg_sort = sortByCTime; break;
-		case 'f': flg_sort = noSort; break;		
+		case 'f': flg_noSort = 1; break;		
 		
-		case 'R': flg_sort = reverseSort; break;
+		case 'R': flg_R = 1; break;
                 case 'S': flg_sort = sortBySize; break;
 		case 't': flg_sort = sortByMTime; break;
 		case 'u': flg_sort = sortByATime; break;
@@ -56,11 +57,33 @@ int main(int argc,char *argv[]) {
                 default: break;
                 }
         }
-	
-	pFtsRead = fts_open(argv + 1,FTS_COMFOLLOW | FTS_NOCHDIR,&compare);
 
+	argc -= optind;
+	argc += optind;
+
+	if((pFtsRead = fts_open(argv, fts_options,compare)) == NULL) {
+		fprintf(stderr, "read error!\n");
+		exit(1);	
+	}
+	while( (pFtsParent = fts_read(pFtsRead)) != NULL)
+        {
+            pFtsChildren = fts_children(pFtsRead,0);
+
+            if (errno != 0)
+            {
+                perror("fts_children");
+            }
+
+            while ((NULL != pFtsChildren)
+                && (NULL != pFtsChildren->fts_link))
+            {
+                pFtsChildren = pFtsChildren->fts_link;
+                printf("%s%s\t", pFtsChildren->fts_path,pFtsChildren->fts_name);
+            }
+        }	
+	fts_close(pFtsRead);
 	
-	
+	exit(0);
 }
 
 
