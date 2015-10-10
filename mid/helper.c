@@ -18,11 +18,7 @@ int compare (const FTSENT** a, const FTSENT** b) {
 	info_a = (*a)->fts_info;
 	info_b = (*b)->fts_info;
 	
-	if(info_a == FTS_ERR || info_b == FTS_ERR)
-		return 0;
-	
-
-	if(flg_noSort)
+	if(info_a == FTS_ERR || info_b == FTS_ERR) 
 		return 0;
 
 	if(info_a == FTS_NS || info_b == FTS_NS) {
@@ -52,7 +48,18 @@ int compareByMethod(struct stat* a, struct stat* b) {
 		if(a->st_atime == b->st_atime)
 			return 0;
 		return (a->st_atime > b->st_atime ? -1:1);
-				
+	case sortByMTime:				
+		if(a->st_mtime == b->st_mtime)
+			return 0;
+		return (a->st_mtime > b->st_mtime ? -1:1);
+	case sortByCTime:
+		if(a->st_ctime == b->st_ctime)
+			return 0;
+		return (a->st_ctime > b->st_ctime ? -1:1);
+	case sortBySize:
+		if(a->st_size == b->st_size)
+			return 0;
+		return (a->st_size > b->st_size ? -1:1);
 		
 	default: return 0;
 	}

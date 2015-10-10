@@ -15,4 +15,4 @@
 
 
 int compare(const FTSENT **, const FTSENT **);
-
+int getLength(const FTS);
