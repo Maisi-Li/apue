@@ -42,8 +42,6 @@ int main(int argc,char *argv[]) {
 	int fts_options = FTS_PHYSICAL;
 //	long block;
 	setprogname((char*)argv[0]);
-//	block = atol(getenv("BLOCKSIZE"));
-	printf("blocksize %s\n",getenv("BLOCKSIZE"));
 	// super user
 	if(geteuid() == 0)
 		flg_A = 1;
@@ -85,7 +83,6 @@ int main(int argc,char *argv[]) {
 		argv = currentPath;
 		argc++;
 	}
-
 	//check if . or .. would be show
 	if(!flg_A && flg_a)
 		fts_options |= FTS_SEEDOT;

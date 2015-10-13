@@ -16,4 +16,7 @@
 int compare(const FTSENT **, const FTSENT **);
 Length getLength(const FTSENT *pChild);
 
+void resetBlock(char*, long);
+void resetSize(char*, long);
+double humanizeNumber(double, char*);
 #endif
