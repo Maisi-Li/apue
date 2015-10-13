@@ -99,9 +99,9 @@ Length getLength(const FTSENT *pChild) {
 				s_length.l_blocks = tempStat->st_blocks;
 
 			//
-			resetSize(pBuf, tempStat->st_size);
-			printf("%s: %s ", pChild->fts_accpath,
-					pBuf);
+	//		resetSize(pBuf, tempStat->st_size);
+	//		printf("%s: %s ", pChild->fts_accpath,
+	//				pBuf);
 		//	printf("after resize: %0.1f\n", resizeBlock(tempStat->st_blocks));
 		}
 		//printf
@@ -118,10 +118,22 @@ Length getLength(const FTSENT *pChild) {
 	}
 	else if (flg_s) {
 		resetBlock(pBuf, s_length.l_blocks);
-		printf("MaxBlockSize: %s\n", pBuf);		
+	//	printf("MaxBlockSize: %s\n", pBuf);		
 		s_length.l_blocks = strlen(pBuf);
 	}
-
+	
+	if((flg_display == in_l || flg_display == in_n) && flg_h && !hasDevice) {
+		resetSize(pBuf, s_length.l_size);
+			s_length.l_size = strlen(pBuf);
+	}
+	
+	s_length.column = s_length.l_name;
+	if(flg_i)
+		s_length.column += s_length.l_ino + 1;
+	if(flg_s)
+		s_length.column += s_length.l_blocks + 1;
+	if(flg_F)
+		s_length.column += 1;
 	
 	printf("finish!\n");
 

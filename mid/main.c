@@ -33,6 +33,9 @@ NonPrintableMethod flg_nonPrintable = in_q;
 int flg_h = 0;
 int flg_s = 0;
 Block flg_block = in_k;
+
+int flg_i = 0;
+int flg_F = 0;
 // 
 char* pWidth = NULL;
 int main(int argc,char *argv[]) {
@@ -59,7 +62,9 @@ int main(int argc,char *argv[]) {
 		case 'c': flg_sort = sortByCTime; break;
 		case 'C': flg_display = in_C; break;
 		case 'f': flg_noSort = 1; break;		
+		case 'F': flg_F = 1; break;
 		case 'h': flg_h = 1; flg_block = in_h; break;
+		case 'i': flg_i = 1; break;
 		case 'k': flg_block = in_k; break; 
 		case 'l': flg_display = in_l; break;
 		case 'n': flg_display = in_n; break;

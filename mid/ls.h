@@ -59,4 +59,6 @@ extern int windowWidth;
 extern int flg_h;
 extern int flg_s;
 extern Block flg_block;
+extern int flg_F;
+extern int flg_i;
 #endif
