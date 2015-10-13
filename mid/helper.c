@@ -6,11 +6,169 @@
 #include<string.h>
 #include<errno.h>
 #include<unistd.h>
-
+#include<string.h>
+#include<pwd.h>
+#include<grp.h>
+#include<math.h>
 #include "ls.h"
 #include "helper.h"
 
 int compareByMethod(struct stat* a, struct stat* b);
+int getIntLength(int);
+double resizeBlock(long block);
+double humanizeNumber(double num, char* postfix);
+//
+int windowWidth; // default width 
+
+Length getLength(const FTSENT *pChild) {
+	char *pColumns = NULL;
+	Length s_length = {0};
+	int temp_len = 0;
+	char pBuf[1024];
+	struct stat *tempStat = pChild->fts_statp;
+	struct passwd *pUid = NULL;
+	struct group *pGid = NULL;
+	int hasDevice = 0;
+
+	pColumns = getenv("COLUMNS");
+	if(pColumns != NULL && atoi(pColumns) > 0) 
+		windowWidth = atoi(pColumns);
+
+	while(pChild != NULL) {
+		s_length.count++;
+		
+		// get access path (NAME)
+		if(strlen(pChild->fts_accpath) > s_length.l_name)
+			s_length.l_name = strlen(pChild->fts_accpath);			
+		
+		if(pChild->fts_info != FTS_NS)	{
+			tempStat = pChild->fts_statp;
+
+			// get inode 
+			//(void)snfrintf(pBuf, sizeof(pBuf),"%lu",tempStat->st_ino);
+			if(tempStat->st_ino > s_length.l_ino)
+				s_length.l_ino = tempStat->st_ino;
+
+			// get nlink
+			if(tempStat->st_nlink > s_length.l_nlink)
+				s_length.l_nlink = tempStat->st_nlink;
+
+			// get uid
+			pUid = getpwuid(tempStat->st_uid);
+			if(flg_display == in_n || pUid == NULL)	{
+				(void)snprintf(pBuf, sizeof(pBuf),"%u",
+					tempStat->st_uid);
+				temp_len = strlen(pBuf);
+			}
+			else 
+				temp_len = strlen(pUid->pw_name);
+			if(temp_len > s_length.l_uid)
+				s_length.l_uid = temp_len;
+			
+			//get gid
+			pGid = getgrgid(tempStat->st_gid);			
+			if(flg_display == in_n || pUid == NULL)	{
+				(void)snprintf(pBuf, sizeof(pBuf),"%u",
+					tempStat->st_gid);
+				temp_len = strlen(pBuf);
+			}
+			else 
+				temp_len = strlen(pGid->gr_name);
+			if(temp_len > s_length.l_gid)
+				s_length.l_gid = temp_len;
+
+
+			// get size 
+			if((tempStat->st_mode & S_IFMT) == S_IFBLK 
+				|| (tempStat->st_mode & S_IFMT) == S_IFCHR) 
+				hasDevice = 1;
+
+			if(hasDevice) {
+				if(major(tempStat->st_rdev) > s_length.l_major)
+					s_length.l_major = major(tempStat->st_rdev);
+				
+				if(minor(tempStat->st_rdev) > s_length.l_minor)
+					s_length.l_minor = minor(tempStat->st_rdev);
+			
+			}
+			else {
+				if(tempStat->st_size > s_length.l_size)
+					s_length.l_size = tempStat->st_size;
+			}
+
+			// get block
+			if(tempStat->st_blocks > s_length.l_blocks)
+				s_length.l_blocks = tempStat->st_blocks;
+			printf("%s: %lu\n", pChild->fts_accpath, tempStat->st_blocks);
+		}
+		//printf
+		pChild = pChild->fts_link;
+	}// end while
+
+	// count length
+	s_length.l_ino = getIntLength(s_length.l_ino);
+	s_length.l_nlink = getIntLength(s_length.l_nlink);
+	if(hasDevice) {
+		s_length.l_size = getIntLength(s_length.l_major) +
+				 getIntLength(s_length.l_minor) + 2;
+	}
+	else if (flg_s) {
+			
+	}
+	printf("finish!\n");
+
+	return s_length;
+}
+
+int getIntLength(int a)	{
+	int l = 1;
+	while(a > 9) {
+		l++;
+		a/=10;
+	}
+	return l;
+}
+
+double resizeBlock(long block) {
+	char* pDefaultSize = NULL;
+	long envSize;
+	double val;
+	pDefaultSize = getenv("BLOCKSIZE");
+	if(pDefaultSize == NULL || atol(pDefaultSize) == 0) {
+	// lab system is 1024
+		envSize = 1024;
+	}
+	else
+		envSize = atol(pDefaultSize);
+	
+	//default is -k
+	if(flg_block == in_h) {
+		val = humanizeNumber(block*512.0,NULL);
+		//x.0 <  ceil <x.5
+		if(ceil(val + 0.5) == ceil(val))
+			return ceil(val) - 0.5;
+		else
+		// makesure it wouldnt be 1.0
+			return ceil(val + 0.1) - 1;
+	}
+	else
+		return ceil(block * 512.0/envSize);
+}
+
+double humanizeNumber(double num, char* postfix) {
+	char unit[7] = {' ','K' , 'M', 'G', 'T', 'P', 'E'};
+	int index = 0;
+	
+	if(num > 1000) {
+		num/= 1000;
+		index++;
+	}
+	
+	if(postfix != NULL)
+		*postfix = unit[index];
+
+	return num;	
+}
 
 int compare (const FTSENT** a, const FTSENT** b) {
 	int info_a, info_b;
@@ -63,4 +221,8 @@ int compareByMethod(struct stat* a, struct stat* b) {
 		
 	default: return 0;
 	}
+
+	return 0;
 }
+
+

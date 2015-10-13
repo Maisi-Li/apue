@@ -30,6 +30,9 @@ int flg_R = 0;
 DisplayFormat flg_display = in_C;
 NonPrintableMethod flg_nonPrintable = in_q;
 
+int flg_h = 0;
+int flg_s = 0;
+Block flg_block = in_k;
 // 
 char* pWidth = NULL;
 int main(int argc,char *argv[]) {
@@ -37,9 +40,10 @@ int main(int argc,char *argv[]) {
 	char* currentPath[] = {".",NULL};
         int opt;
 	int fts_options = FTS_PHYSICAL;
-
+//	long block;
 	setprogname((char*)argv[0]);
-
+//	block = atol(getenv("BLOCKSIZE"));
+	printf("blocksize %s\n",getenv("BLOCKSIZE"));
 	// super user
 	if(geteuid() == 0)
 		flg_A = 1;
@@ -57,11 +61,13 @@ int main(int argc,char *argv[]) {
 		case 'c': flg_sort = sortByCTime; break;
 		case 'C': flg_display = in_C; break;
 		case 'f': flg_noSort = 1; break;		
-//		case 'h': flg_nonPrintable = 
+		case 'h': flg_h = 1; flg_block = in_h; break;
+		case 'k': flg_block = in_k; break; 
 		case 'l': flg_display = in_l; break;
 		case 'n': flg_display = in_n; break;
 		case 'q': flg_nonPrintable = in_q; break;
 		case 'R': flg_R = 1; break;
+		case 's': flg_s = 1; break;
                 case 'S': flg_sort = sortBySize; break;
 		case 't': flg_sort = sortByMTime; break;
 		case 'u': flg_sort = sortByATime; break;
@@ -93,12 +99,34 @@ void traverse(int argc, char* argv[], int options) {
 
 	FTS *pFTS = NULL;
 	FTSENT *pFTSRead = NULL;
-	FTSENT *PFTSChildren = NULL;
-	
-	if((pFTS = fts_open(argv, options, flg_noSort? NULL : compare)) == NULL) {
-		fprintf(stderr,"%s: %s\n",getprogname(), strerror(errno));
+	FTSENT *pFTSChildren = NULL;
+	FTSENT *pFTSTemp = NULL;
+	if((pFTS = fts_open(argv, options, flg_noSort? NULL : compare)) == NULL ||
+			errno != 0) {
+		//fprintf(stderr,"%s: %s\n",getprogname(), strerror(errno));
+		exit(1);
 	}
 
+	pFTSChildren = fts_children(pFTS, 0);
+	pFTSTemp = pFTSChildren;
+	
+	if(pFTSChildren == NULL && errno != 0) {
+		fprintf(stderr, "haha%s: %s\n", getprogname(), strerror(errno));
+		exit(1);
+	}
+	//getLength(pFTSTemp);
+
+	while((pFTSRead = fts_read(pFTS)) != NULL) {
+
+		//printf("%s + %s heihei!\n\n",pFTSRead->fts_name,pFTSRead->fts_accpath);
+		if(pFTSRead->fts_level > 0 && pFTSRead->fts_info == FTS_D)
+			continue;
+		pFTSChildren = fts_children(pFTS, 0);
+	//	while(pFTSChildren != NULL) {
+		getLength(pFTSChildren);
+	//	pFTSChildren = pFTSChildren->fts_link;
+	//	}
+	}
 }
 
 

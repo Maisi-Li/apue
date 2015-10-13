@@ -7,7 +7,7 @@ LINK = -Wall $(DEBUG)
 all: $(OBJS) ls clean
 
 ls: $(OBJS) 
-	$(CC) $(LINK) $(OBJS) -o ls -lbsd
+	$(CC) $(LINK) $(OBJS) -o ls -lbsd -lm
 
 main.o: main.c helper.h ls.h helper.c
 	$(CC) $(COMPILE) main.c 

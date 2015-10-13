@@ -1,6 +1,5 @@
 #ifndef LS_H_
 #define LS_H_
-#endif
 
 
 
@@ -25,15 +24,23 @@ typedef enum {
 	in_w
 } NonPrintableMethod;
 
+typedef enum {
+	in_h,
+	in_k
+} Block;
+
 typedef struct {
 	int count;
-	int l_inode;
+	int column;
+	int l_ino;
 	int l_nlink;
 	int l_uid;
 	int l_gid;
-	int l_size;
+	long unsigned l_size;
 	int l_name;
-	int l_block;
+	long unsigned l_blocks;
+	int l_major;
+	int l_minor;
 
 } Length;
 
@@ -46,4 +53,10 @@ extern int flg_R;
 extern DisplayFormat flg_display;
 extern NonPrintableMethod flg_nonPrintable;
 
+extern Length fileLength;
 extern int windowWidth;
+
+extern int flg_h;
+extern int flg_s;
+extern Block flg_block;
+#endif

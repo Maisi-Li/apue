@@ -1,6 +1,5 @@
 #ifndef HELPER_H_
 #define HELPER_H_
-#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -12,7 +11,9 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-
+#include "ls.h"
 
 int compare(const FTSENT **, const FTSENT **);
-int getLength(const FTS);
+Length getLength(const FTSENT *pChild);
+
+#endif
