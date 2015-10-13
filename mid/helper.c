@@ -112,20 +112,26 @@ Length getLength(const FTSENT *pChild) {
 	s_length.l_ino = getIntLength(s_length.l_ino);
 	s_length.l_nlink = getIntLength(s_length.l_nlink);
 	
+	//resize size
+	printf("origin size: %lu\n",s_length.l_size);
 	if(hasDevice) {
 		s_length.l_size = getIntLength(s_length.l_major) +
 				 getIntLength(s_length.l_minor) + 2;
 	}
-	else if (flg_s) {
+	else if((flg_display == in_l || flg_display == in_n) && flg_h) {
+		resetSize(pBuf, s_length.l_size);
+		s_length.l_size = strlen(pBuf);
+	}
+	else
+		s_length.l_size = getIntLength(s_length.l_size);
+		
+	//resize block 
+	 if (flg_s) {
 		resetBlock(pBuf, s_length.l_blocks);
-	//	printf("MaxBlockSize: %s\n", pBuf);		
+		printf("MaxBlockSize: %s\n", pBuf);		
 		s_length.l_blocks = strlen(pBuf);
 	}
-	
-	if((flg_display == in_l || flg_display == in_n) && flg_h && !hasDevice) {
-		resetSize(pBuf, s_length.l_size);
-			s_length.l_size = strlen(pBuf);
-	}
+		
 	
 	s_length.column = s_length.l_name;
 	if(flg_i)

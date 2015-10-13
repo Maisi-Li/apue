@@ -38,12 +38,16 @@ int flg_i = 0;
 int flg_F = 0;
 // 
 char* pWidth = NULL;
+Length len = {0};
+
+
 int main(int argc,char *argv[]) {
 
 	char* currentPath[] = {".",NULL};
         int opt;
 	int fts_options = FTS_PHYSICAL;
-//	long block;
+
+
 	setprogname((char*)argv[0]);
 	// super user
 	if(geteuid() == 0)
@@ -116,20 +120,18 @@ void traverse(int argc, char* argv[], int options) {
 		fprintf(stderr, "haha%s: %s\n", getprogname(), strerror(errno));
 		exit(1);
 	}
-	//getLength(pFTSTemp);
+	len = getLength(pFTSTemp);
+	printf("len: %lu\n", len.l_size);
 
-	while((pFTSRead = fts_read(pFTS)) != NULL) {
+/*	while((pFTSRead = fts_read(pFTS)) != NULL) {
 
-		//printf("%s + %s heihei!\n\n",pFTSRead->fts_name,pFTSRead->fts_accpath);
 		if(pFTSRead->fts_level > 0 && pFTSRead->fts_info == FTS_D)
 			continue;
 		pFTSChildren = fts_children(pFTS, 0);
-	//	while(pFTSChildren != NULL) {
-		getLength(pFTSChildren);
-	//	pFTSChildren = pFTSChildren->fts_link;
-	//	}
 	}
+*/
 }
+
 
 
 
