@@ -36,9 +36,9 @@ typedef struct {
 	int l_nlink;
 	int l_uid;
 	int l_gid;
-	long unsigned l_size;
+	int l_size;
 	int l_name;
-	long unsigned l_blocks;
+	int l_blocks;
 	int l_major;
 	int l_minor;
 

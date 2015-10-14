@@ -10,13 +10,35 @@
 #include<pwd.h>
 #include<grp.h>
 #include<math.h>
+#include<stdint.h>
+#include<time.h>
 #include "ls.h"
 #include "helper.h"
 
+#define SIXMONTHS ()
 int compareByMethod(struct stat* a, struct stat* b);
 int getIntLength(int);
 //
 int windowWidth; // default width 
+
+void displayTime(time_t before) {
+	time_t now;
+	char pBuf[128];
+	struct tm* time_info;
+	now = time(NULL);
+	double gap = abs(now - before);
+
+	if((time_info = localtime(&before)) != NULL) {
+		// six month = 60 * 60 *24*365 /2  = 15768000
+		if(gap < 15768000) 
+			(void) strftime(pBuf, 16, "%b %d %H:%M", time_info);
+		else
+			(void) strftime(pBuf, 16, "%b %d %Y", time_info);
+		printf("%s ", pBuf);		
+	}	
+
+}
+
 
 Length getLength(const FTSENT *pChild) {
 	char *pColumns = NULL;
@@ -27,6 +49,9 @@ Length getLength(const FTSENT *pChild) {
 	struct passwd *pUid = NULL;
 	struct group *pGid = NULL;
 	int hasDevice = 0;
+
+	uint64_t maxSize = 0;
+	uint64_t maxBlock = 0;
 
 	pColumns = getenv("COLUMNS");
 	if(pColumns != NULL && atoi(pColumns) > 0) 
@@ -76,7 +101,8 @@ Length getLength(const FTSENT *pChild) {
 				s_length.l_gid = temp_len;
 
 
-			// get size 
+			// get size
+			hasDevice = 0; 
 			if((tempStat->st_mode & S_IFMT) == S_IFBLK 
 				|| (tempStat->st_mode & S_IFMT) == S_IFCHR) 
 				hasDevice = 1;
@@ -90,13 +116,13 @@ Length getLength(const FTSENT *pChild) {
 			
 			}
 			else {
-				if(tempStat->st_size > s_length.l_size)
-					s_length.l_size = tempStat->st_size;
+				if(tempStat->st_size > maxSize)
+					maxSize = tempStat->st_size;
 			}
 
 			// get block
-			if(tempStat->st_blocks > s_length.l_blocks)
-				s_length.l_blocks = tempStat->st_blocks;
+			if(tempStat->st_blocks > maxBlock)
+				maxBlock = tempStat->st_blocks;
 
 			//
 	//		resetSize(pBuf, tempStat->st_size);
@@ -113,22 +139,26 @@ Length getLength(const FTSENT *pChild) {
 	s_length.l_nlink = getIntLength(s_length.l_nlink);
 	
 	//resize size
-	printf("origin size: %lu\n",s_length.l_size);
-	if(hasDevice) {
+	//printf("origin size: %zu\n",maxSize);
+	if(s_length.l_major != 0 || s_length.l_minor != 0) {
 		s_length.l_size = getIntLength(s_length.l_major) +
 				 getIntLength(s_length.l_minor) + 2;
 	}
-	else if((flg_display == in_l || flg_display == in_n) && flg_h) {
-		resetSize(pBuf, s_length.l_size);
-		s_length.l_size = strlen(pBuf);
+	else if(flg_display == in_l || flg_display == in_n) {
+		if(flg_h) {
+			resetSize(pBuf, maxSize);
+			s_length.l_size = strlen(pBuf);
+		}
+		else {
+			s_length.l_size = 
+				snprintf(pBuf, sizeof(pBuf), "%zu", maxSize);
+		}
 	}
-	else
-		s_length.l_size = getIntLength(s_length.l_size);
 		
 	//resize block 
 	 if (flg_s) {
-		resetBlock(pBuf, s_length.l_blocks);
-		printf("MaxBlockSize: %s\n", pBuf);		
+		resetBlock(pBuf, maxBlock);
+		//printf("MaxBlockSize: %s\n", pBuf);		
 		s_length.l_blocks = strlen(pBuf);
 	}
 		
@@ -141,7 +171,7 @@ Length getLength(const FTSENT *pChild) {
 	if(flg_F)
 		s_length.column += 1;
 	
-	printf("finish!\n");
+	//printf("finish!\n");
 
 	return s_length;
 }
@@ -155,10 +185,10 @@ int getIntLength(int a)	{
 	return l;
 }
 
-void resetSize(char* pBuf, long size) {
+void resetSize(char* pBuf, uint64_t size) {
 	char unit = ' ';
 	double num = 0;
-	num = humanizeNumber(size,&unit);
+	num = humanizeNumber(size*1.0,&unit);
 	if(unit == ' ')
 		snprintf(pBuf, sizeof(pBuf), "%d",(int) num);
 	else if(num < 10.0) 
@@ -168,7 +198,7 @@ void resetSize(char* pBuf, long size) {
 }
 
 
-void resetBlock(char* pBuf, long block) {
+void resetBlock(char* pBuf, uint64_t block) {
 	char* pDefaultSize = NULL;
 	long envSize;
 	double val;
@@ -184,16 +214,9 @@ void resetBlock(char* pBuf, long block) {
 	//default is -k
 	if(flg_block == in_h) {
 		val = humanizeNumber(block*512.0, &unit);
-		//x.0 <  ceil <x.5
-		if(ceil(val + 0.5) == ceil(val)) {
-			val = ceil(val) - 0.5;
-			(void)snprintf(pBuf, sizeof(pBuf), "%0.1f%c", val, unit);
-		}
-		else {
-		// makesure it wouldnt be 1.0
-			val =  ceil(val + 0.1) - 1;
-			(void)snprintf(pBuf, sizeof(pBuf),"%d%c",(int)val, unit);
-		}
+		val = val < 0.5f ? 0.5f: floor(val*2)/2;
+		(void)snprintf(pBuf, sizeof(pBuf), "%0.1f%c", val, unit);
+		
 	}
 	else {
 		val = ceil(block * 512.0/envSize);
@@ -204,8 +227,8 @@ void resetBlock(char* pBuf, long block) {
 double humanizeNumber(double num, char* postfix) {
 	char unit[7] = {'\0','K' , 'M', 'G', 'T', 'P', 'E'};
 	int index = 0;
-	printf("num = %f\n", num);
-	if((int)num > 1000) {
+	//printf("num = %f\n", num);
+	if(num > 1000) {
 		num/= 1000;
 		index++;
 	}

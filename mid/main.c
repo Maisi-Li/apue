@@ -121,7 +121,8 @@ void traverse(int argc, char* argv[], int options) {
 		exit(1);
 	}
 	len = getLength(pFTSTemp);
-	printf("len: %lu\n", len.l_size);
+	display_one(pFTSChildren, len);
+	//printf("len: %lu\n", len.l_size);
 
 /*	while((pFTSRead = fts_read(pFTS)) != NULL) {
 

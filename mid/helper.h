@@ -11,12 +11,16 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <time.h>
 #include "ls.h"
 
 int compare(const FTSENT **, const FTSENT **);
 Length getLength(const FTSENT *pChild);
 
-void resetBlock(char*, long);
-void resetSize(char*, long);
+void resetBlock(char*, uint64_t);
+void resetSize(char*, uint64_t);
 double humanizeNumber(double, char*);
+
+void displayTime(time_t time);
 #endif
