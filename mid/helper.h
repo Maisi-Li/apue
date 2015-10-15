@@ -23,4 +23,6 @@ void resetSize(char*, uint64_t);
 double humanizeNumber(double, char*);
 
 void displayTime(time_t time);
+void displayChar(char*);
+void displayLink(FTSENT *pChild);
 #endif

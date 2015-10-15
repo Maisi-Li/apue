@@ -20,6 +20,7 @@ void display_one(FTSENT *pChild, Length len) {
 	time_t pTime;
 
 	bzero(pBuf, 1024);
+	bzero(pMode, 12);
 	pStat = pChild->fts_statp;
 	// check a
 	
@@ -77,7 +78,14 @@ void display_one(FTSENT *pChild, Length len) {
 
 	//name
 	(void)printf("%s", pChild->fts_accpath);
-	// check -F
+	// -F
+	if(flg_F) 
+		displayChar(pMode);
+
+	//symbolic link 
+	if((flg_display == in_l || flg_display == in_n) && pMode[0] == 'l')
+		displayLink(pChild);
+
 
 	(void)printf("\n");
 }

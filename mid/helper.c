@@ -12,14 +12,44 @@
 #include<math.h>
 #include<stdint.h>
 #include<time.h>
+//#include<limit.h>
+#include<err.h>
 #include "ls.h"
 #include "helper.h"
 
-#define SIXMONTHS ()
 int compareByMethod(struct stat* a, struct stat* b);
 int getIntLength(int);
 //
 int windowWidth; // default width 
+
+void displayLink(FTSENT* pChild) {
+	int len = 0;
+	char pName[NAME_MAX + 1];
+	char pPath[PATH_MAX + 1];
+	if(pChild->fts_level == FTS_ROOTLEVEL)
+		(void) snprintf(pName, sizeof(pName), "%s", pChild->fts_name);
+	else
+		(void) snprintf(pPath, sizeof(pName), "%s/%s", 
+				pChild->fts_parent->fts_accpath, pChild->fts_name);
+	len = readlink(pName, pPath, sizeof(pPath) - 1);
+	if(len == -1) 
+		warn( "displayLink: readlink: ");
+	pPath[len] = '\0';
+	printf("-> ");
+	printf("%s", pPath);
+}
+
+void displayChar(char* pMode) {
+	switch(pMode[0]) {
+	case 'd': printf("%c ", '/'); break;
+	case 'l': printf("%c ", '@'); break;
+	case 's': printf("%c ", '='); break;
+	case 'p': printf("%c ", '|'); break;
+	case 'w': printf("%c ", '%'); break;
+	}	
+	if(pMode[3] == 'x' || pMode[6] == 'x' || pMode[9] == 'x')
+		printf("%c ", '*');
+}
 
 void displayTime(time_t before) {
 	time_t now;
