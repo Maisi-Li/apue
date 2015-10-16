@@ -13,13 +13,12 @@
 
 void display_one(FTSENT *pChild, Length len) {
 	struct stat *pStat = {0};
-	char pBuf[1024];
+	char* pBuf = calloc(1024, sizeof(char));
 	char pMode[12];
 	struct passwd *pUid = NULL;
 	struct group *pGid = NULL;
 	time_t pTime;
 
-	bzero(pBuf, 1024);
 	bzero(pMode, 12);
 	pStat = pChild->fts_statp;
 	// check a
@@ -30,7 +29,7 @@ void display_one(FTSENT *pChild, Length len) {
 		(void)printf("%*lu ",len.l_ino,pStat->st_ino);
 	//block
 	if(flg_s) {
-		resetBlock(pBuf, pStat->st_blocks);
+		pBuf = resetBlock(pStat->st_blocks);
 		(void) printf("%*s ", len.l_blocks, pBuf);
 	}	
 	// check long format
@@ -73,18 +72,18 @@ void display_one(FTSENT *pChild, Length len) {
 			pTime = pStat->st_ctime;
 		if(flg_sort == sortByATime)
 			pTime = pStat->st_atime;
-		displayTime(pTime);	
+		(void) printf("%s ", displayTime(pTime));	
 	}
 
 	//name
 	(void)printf("%s", pChild->fts_accpath);
 	// -F
 	if(flg_F) 
-		displayChar(pMode);
+		(void) printf("%c ", displayChar(pMode));
 
 	//symbolic link 
 	if((flg_display == in_l || flg_display == in_n) && pMode[0] == 'l')
-		displayLink(pChild);
+		(void) printf("%s",displayLink(pChild));
 
 
 	(void)printf("\n");

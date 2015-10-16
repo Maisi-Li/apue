@@ -9,10 +9,10 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-
+#include<err.h>
 #include "ls.h"
 #include "helper.h"
-
+#include "print.h"
 #define	MAXFILES 1024
 
 
@@ -40,14 +40,16 @@ int flg_F = 0;
 char* pWidth = NULL;
 Length len = {0};
 
-
+int flg_dot = 0;
+int flg_d = 0;
+int flg_printBefore = 0;
+char* pBuf;
 int main(int argc,char *argv[]) {
 
 	char* currentPath[] = {".",NULL};
         int opt;
 	int fts_options = FTS_PHYSICAL;
-
-
+	pBuf = calloc(1024, sizeof(char));
 	setprogname((char*)argv[0]);
 	// super user
 	if(geteuid() == 0)
@@ -65,6 +67,7 @@ int main(int argc,char *argv[]) {
 		case 'A': flg_A = 1; break;
 		case 'c': flg_sort = sortByCTime; break;
 		case 'C': flg_display = in_C; break;
+		case 'd': flg_d = 1; break;
 		case 'f': flg_noSort = 1; break;		
 		case 'F': flg_F = 1; break;
 		case 'h': flg_h = 1; flg_block = in_h; break;
@@ -93,9 +96,11 @@ int main(int argc,char *argv[]) {
 		argc++;
 	}
 	//check if . or .. would be show
-	if(!flg_A && flg_a)
+	if(!flg_A && flg_a) {
 		fts_options |= FTS_SEEDOT;
-	
+		flg_dot = 1;
+	}
+
 	
 	traverse(argc, argv, fts_options);
 	exit(0);
@@ -108,29 +113,85 @@ void traverse(int argc, char* argv[], int options) {
 	FTSENT *pFTSChildren = NULL;
 	FTSENT *pFTSTemp = NULL;
 	if((pFTS = fts_open(argv, options, flg_noSort? NULL : compare)) == NULL ||
-			errno != 0) {
-		//fprintf(stderr,"%s: %s\n",getprogname(), strerror(errno));
-		exit(1);
-	}
+			errno != 0) 
+		err(1,":fts_open ");
 
 	pFTSChildren = fts_children(pFTS, 0);
 	pFTSTemp = pFTSChildren;
 	
-	if(pFTSChildren == NULL && errno != 0) {
-		fprintf(stderr, "haha%s: %s\n", getprogname(), strerror(errno));
-		exit(1);
-	}
-	len = getLength(pFTSTemp);
-	display_one(pFTSChildren, len);
-	//printf("len: %lu\n", len.l_size);
+	if(pFTSChildren == NULL && errno != 0)
+		err(1,":traverse :before getLength ");
+	
+	len = getLength(pFTSChildren);
+	//display_one(pFTSChildren, len);
 
-/*	while((pFTSRead = fts_read(pFTS)) != NULL) {
 
-		if(pFTSRead->fts_level > 0 && pFTSRead->fts_info == FTS_D)
-			continue;
-		pFTSChildren = fts_children(pFTS, 0);
+	// 1. display non-directory oprands
+/*	while(pFTSChildren != NULL) {
+		if(!verifyFTS(pFTSChildren) && 
+				!S_ISDIR(pFTSChildren->fts_statp->st_mode)) {
+			display_one(pFTSChildren, len);
+			flg_printBefore = 1;
+		}
+		pFTSChildren = pFTSChildren->fts_link;
+		
 	}
 */
+
+	//1. print operand as file 
+//	pFTSChildren = pFTSTemp;
+	if(flg_d) {
+		while(pFTSChildren != NULL) {
+			if(!verifyFTS(pFTSChildren)) {
+				display_one(pFTSChildren, len);
+			}	
+			pFTSChildren = pFTSChildren->fts_link;
+		}	
+		return ;
+		
+	}
+	//only print file
+	pFTSChildren = pFTSTemp;
+	while(pFTSChildren != NULL) {
+		if(!verifyFTS(pFTSChildren) && 
+				!S_ISDIR(pFTSChildren->fts_statp->st_mode)) {
+			display_one(pFTSChildren, len);
+			flg_printBefore = 1;
+		}
+		pFTSChildren = pFTSChildren->fts_link;
+	}
+
+	
+	// 
+	while((pFTSRead = fts_read(pFTS)) != NULL) {
+
+		if(verifyFTS(pFTSRead) ||
+			pFTSRead->fts_level != 0 || pFTSRead->fts_info != FTS_D)
+			continue;
+		
+		pFTSChildren = fts_children(pFTS, 0);
+		len = getLength(pFTSChildren);
+		if(argc > 1) {
+			if(flg_printBefore)
+				printf("\n");
+			printf("%s:\n", pFTSChildren->fts_parent->fts_accpath);
+			}
+
+		if(flg_s) {
+			pBuf = resetBlock(len.total_b);
+			printf("total %s\n",pBuf);
+		}
+		while(pFTSChildren) {
+			if(!verifyFTS(pFTSChildren)) {
+				display_one(pFTSChildren, len);
+				flg_printBefore = 1;
+
+			}
+			pFTSChildren = pFTSChildren -> fts_link;
+		
+		}
+	}
+	fts_close(pFTS);
 }
 
 

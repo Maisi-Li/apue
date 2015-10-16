@@ -41,6 +41,7 @@ typedef struct {
 	int l_blocks;
 	int l_major;
 	int l_minor;
+	int total_b;
 
 } Length;
 
@@ -61,4 +62,7 @@ extern int flg_s;
 extern Block flg_block;
 extern int flg_F;
 extern int flg_i;
+extern int flg_dot;
+extern int flg_d;
+extern int flg_printBefore;
 #endif

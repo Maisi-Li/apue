@@ -22,10 +22,28 @@ int getIntLength(int);
 //
 int windowWidth; // default width 
 
-void displayLink(FTSENT* pChild) {
+int verifyFTS(FTSENT* pFTS) {
+	if(errno) {
+		err(1, "%s: ", pFTS->fts_name);
+		return(1);
+	}
+	switch(pFTS->fts_info) {
+	case FTS_DC: warn("%s: A directory that causes a cycle.\n"
+				, pFTS->fts_name); return (1);
+	case FTS_DNR:warn("%s: A directory which cannot be read.\n"
+				, pFTS->fts_name); return (1);
+	case FTS_ERR:err(1, "%s: ", pFTS->fts_name); return (1);
+	}
+	return 0;
+
+
+}
+
+char* displayLink(FTSENT* pChild) {
 	int len = 0;
 	char pName[NAME_MAX + 1];
 	char pPath[PATH_MAX + 1];
+	char* pBuf = calloc(PATH_MAX + 1,sizeof(char));
 	if(pChild->fts_level == FTS_ROOTLEVEL)
 		(void) snprintf(pName, sizeof(pName), "%s", pChild->fts_name);
 	else
@@ -35,25 +53,27 @@ void displayLink(FTSENT* pChild) {
 	if(len == -1) 
 		warn( "displayLink: readlink: ");
 	pPath[len] = '\0';
-	printf("-> ");
-	printf("%s", pPath);
+	(void) snprintf(pBuf, sizeof(pBuf), "-> %s", pPath);
+	return pBuf;
 }
 
-void displayChar(char* pMode) {
+char displayChar(char* pMode) {
+	char ch = '\0';
 	switch(pMode[0]) {
-	case 'd': printf("%c ", '/'); break;
-	case 'l': printf("%c ", '@'); break;
-	case 's': printf("%c ", '='); break;
-	case 'p': printf("%c ", '|'); break;
-	case 'w': printf("%c ", '%'); break;
-	}	
-	if(pMode[3] == 'x' || pMode[6] == 'x' || pMode[9] == 'x')
-		printf("%c ", '*');
+	case 'd': ch = '/'; break;
+	case 'l': ch = '@'; break;
+	case 's': ch = '='; break;
+	case 'p': ch = '|'; break;
+	case 'w': ch = '%'; break;
+	default : if(pMode[3] == 'x' || pMode[6] == 'x' || pMode[9] == 'x')
+			printf("%c ", '*');break;
+	}
+	return ch;
+	
 }
-
-void displayTime(time_t before) {
+char* displayTime(time_t before) {
 	time_t now;
-	char pBuf[128];
+	char* pBuf = calloc(16, sizeof(char));
 	struct tm* time_info;
 	now = time(NULL);
 	double gap = abs(now - before);
@@ -63,9 +83,9 @@ void displayTime(time_t before) {
 		if(gap < 15768000) 
 			(void) strftime(pBuf, 16, "%b %d %H:%M", time_info);
 		else
-			(void) strftime(pBuf, 16, "%b %d %Y", time_info);
-		printf("%s ", pBuf);		
+			(void) strftime(pBuf, 16, "%b %d %Y", time_info);		
 	}	
+	return pBuf;
 
 }
 
@@ -74,7 +94,7 @@ Length getLength(const FTSENT *pChild) {
 	char *pColumns = NULL;
 	Length s_length = {0};
 	int temp_len = 0;
-	char pBuf[1024];
+	char* pBuf = calloc(1024, sizeof(char));
 	struct stat *tempStat = {0};
 	struct passwd *pUid = NULL;
 	struct group *pGid = NULL;
@@ -88,6 +108,12 @@ Length getLength(const FTSENT *pChild) {
 		windowWidth = atoi(pColumns);
 
 	while(pChild != NULL) {
+/*		if(!flg_dot && pChild->fts_name[0] == '.') {
+			pChild = pChild->fts_link;
+			continue;
+		}
+*/			
+		
 		s_length.count++;
 		
 		// get access path (NAME)
@@ -151,7 +177,8 @@ Length getLength(const FTSENT *pChild) {
 			}
 
 			// get block
-			if(tempStat->st_blocks > maxBlock)
+			s_length.total_b += tempStat->st_blocks;
+			if(tempStat->st_blocks > maxBlock) 
 				maxBlock = tempStat->st_blocks;
 
 			//
@@ -187,9 +214,10 @@ Length getLength(const FTSENT *pChild) {
 		
 	//resize block 
 	 if (flg_s) {
-		resetBlock(pBuf, maxBlock);
+		pBuf = resetBlock(maxBlock);
 		//printf("MaxBlockSize: %s\n", pBuf);		
 		s_length.l_blocks = strlen(pBuf);
+		
 	}
 		
 	
@@ -228,9 +256,10 @@ void resetSize(char* pBuf, uint64_t size) {
 }
 
 
-void resetBlock(char* pBuf, uint64_t block) {
+char* resetBlock(uint64_t block) {
 	char* pDefaultSize = NULL;
 	long envSize;
+	char* pBuf = calloc(1024, sizeof(char));
 	double val;
 	char unit = ' ';
 	pDefaultSize = getenv("BLOCKSIZE");
@@ -252,6 +281,7 @@ void resetBlock(char* pBuf, uint64_t block) {
 		val = ceil(block * 512.0/envSize);
 		(void)snprintf(pBuf, sizeof(pBuf), "%d", (int)val);
 	}
+	return pBuf;
 }
 
 double humanizeNumber(double num, char* postfix) {
@@ -288,10 +318,10 @@ int compare (const FTSENT** a, const FTSENT** b) {
 	}
 	// direcotry first
 	if(S_ISDIR((*a)->fts_statp->st_mode) && !S_ISDIR((*b)->fts_statp->st_mode))
-		return 1;
+		return -1;
 
 	if(!S_ISDIR((*a)->fts_statp->st_mode) && S_ISDIR((*b)->fts_statp->st_mode))
-		return -1;
+		return 1;
 
 	if((result = compareByMethod((*a)->fts_statp, (*b)->fts_statp)) == 0)
 		result = strcmp((*a)->fts_name, (*b)->fts_name);

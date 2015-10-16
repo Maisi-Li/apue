@@ -18,11 +18,12 @@
 int compare(const FTSENT **, const FTSENT **);
 Length getLength(const FTSENT *pChild);
 
-void resetBlock(char*, uint64_t);
+char* resetBlock( uint64_t);
 void resetSize(char*, uint64_t);
 double humanizeNumber(double, char*);
 
-void displayTime(time_t time);
-void displayChar(char*);
-void displayLink(FTSENT *pChild);
+char* displayTime(time_t time);
+char displayChar(char*);
+char* displayLink(FTSENT *pChild);
+int verifyFTS(FTSENT*);
 #endif
