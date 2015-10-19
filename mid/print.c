@@ -15,6 +15,7 @@ void display_mul(char** pCache, Length len) {
 	if(flg_display != in_C && flg_display != in_x)
 		return ;
 	int i = 0;
+	int j = 0;
 	int row = 0;
 	int num = windowWidth/(len.column + 1);
 	if(num == 0)
@@ -30,7 +31,13 @@ void display_mul(char** pCache, Length len) {
 
 	if(flg_display == in_C) {
 		row = (int)ceil(pCacheCount*1.0 / num);
-	
+		for(i = 0; i < row; i++) {
+			for(j = i; j < pCacheCount; j+= row) {
+				(void) printf("%s ", pCache[j]);
+				
+			}
+			(void) printf("\n");
+		}
 }
 	pCacheCount = 0;
 }
@@ -110,6 +117,7 @@ void display_one(FTSENT *pChild, Length len) {
 	// -F
 	if(flg_F) 
 		(void)printf("%c ", displayChar(pMode));
+	(void) printf(" ");
 	//symbolic link 
 	if((flg_display == in_l || flg_display == in_n) && pMode[0] == 'l') {
 		pBuf = displayLink(pChild);

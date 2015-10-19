@@ -23,4 +23,4 @@ print.o: print.c print.h ls.h helper.h
 clean:
 	rm *.o
 
-tar: tar -cvf main.c
+tar: tar -cvf mli27-midtern.tar main.c helper.c ls.h helper.h print.c print.h Makefile

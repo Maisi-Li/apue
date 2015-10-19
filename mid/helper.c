@@ -117,12 +117,11 @@ int verifyFTS(FTSENT* pFTS) {
 		return(1);
 	}
 	switch(pFTS->fts_info) {
-	case FTS_DC: warn("%s: A directory that causes a cycle.\n"
-				, pFTS->fts_name); return (1);
-	case FTS_DNR:warn("%s: A directory which cannot be read.\n"
-				, pFTS->fts_name); return (1);
-	case FTS_ERR:warn( "%s: ", pFTS->fts_name); return (1);
-	case FTS_NS: warn("%s: ",pFTS->fts_name); return(1);
+	case FTS_DC:  return (1);
+	case FTS_DNR: return (1);
+	case FTS_ERR: return (1);
+	case FTS_NS:  return(1);
+	default: return (0);
 	}
 	return 0;
 
@@ -132,19 +131,20 @@ int verifyFTS(FTSENT* pFTS) {
 char* displayLink(FTSENT* pChild) {
 	int len = 0;
 	char pName[NAME_MAX + 1];
-	char pPath[PATH_MAX + 1];
-	char* pBuf = calloc(PATH_MAX + 1,sizeof(char));
+	char pPath[NAME_MAX + 1];
+	char* aBuf = calloc(NAME_MAX + 1,sizeof(char));
 	if(pChild->fts_level == FTS_ROOTLEVEL)
 		(void) snprintf(pName, sizeof(pName), "%s", pChild->fts_name);
 	else
-		(void) snprintf(pPath, sizeof(pName), "%s/%s", 
-				pChild->fts_parent->fts_accpath, pChild->fts_name);
-	len = readlink(pName, pPath, sizeof(pPath) - 1);
+		(void) snprintf(pName, sizeof(pName), "%s/%s", 
+				pChild->fts_path, pChild->fts_name);
+	len = readlink(pName, pPath, sizeof(pPath) + 1);
 	if(len == -1) 
-		warn( "displayLink: readlink: ");
-	pPath[len] = '\0';
-	(void) snprintf(pBuf, sizeof(pBuf), "-> %s", displayName(pPath));
-	return pBuf;
+		return NULL;
+//	pPath[len] = '\0';
+	(void) sprintf(aBuf, "-> %s", pPath);
+//	printf("pBuf: %s\n",pPath);
+	return aBuf;
 }
 
 char displayChar(char* pMode) {
@@ -298,7 +298,7 @@ Length getLength(const FTSENT *pChild) {
 	else if(flg_display == in_l || flg_display == in_n) {
 		if(flg_h) {
 			pBuf = resetSize(maxSize);
-			s_length.l_size = strlen(pBuf);
+			s_length.l_size = strlen(pBuf) + 1;
 			free(pBuf);
 		}
 		else {
@@ -342,7 +342,7 @@ char* resetSize(uint64_t size) {
 	double num = 0;
 	char* pBuf = calloc(1024, sizeof(char));
 	num = humanizeNumber(size*1.0,&unit);
-	if(unit == ' ')
+	if(unit == '\0')
 		snprintf(pBuf, sizeof(pBuf), "%d",(int) num);
 	else if(num < 10.0) 
 		snprintf(pBuf, sizeof(pBuf), "%0.1f%c", num, unit);
@@ -370,7 +370,10 @@ char* resetBlock(uint64_t block) {
 	if(flg_block == in_h) {
 		val = humanizeNumber(block*512.0, &unit);
 		val = val < 0.5f ? 0.5f: floor(val*2)/2;
-		(void)snprintf(pBuf, sizeof(pBuf), "%0.1f%c", val, unit);
+		if(unit == '\0')
+			(void)snprintf(pBuf, sizeof(pBuf), "%d", (int)val);
+		else
+			(void)snprintf(pBuf, sizeof(pBuf), "%0.1f%c", val, unit);
 		
 	}
 	else {

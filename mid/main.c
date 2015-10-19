@@ -177,6 +177,11 @@ void traverse(int argc, char* argv[], int options) {
 			fts_set(pFTS, pFTSRead, FTS_SKIP);
 			continue;
 		}		
+		
+		if(pFTSRead->fts_level > 0 && !flg_R) {
+			fts_set(pFTS, pFTSRead, FTS_SKIP);
+			continue;
+		}
 
 		if(pFTSRead->fts_level == 0 && pFTSRead->fts_info == FTS_D) {
 		
@@ -216,6 +221,7 @@ void traverse(int argc, char* argv[], int options) {
 			if(verifyFTS(pFTSChildren))
 				continue;
 			len = getLength(pFTSChildren);
+			createBuf(&pCache,len);
 			//avoid sub dir begin with '.'
 /*			pBuf = strchr(pFTSChildren->fts_path,'/');
 			if(pBuf[1] == '.' && !flg_dot) 
@@ -229,16 +235,19 @@ void traverse(int argc, char* argv[], int options) {
 			}
 			while(pFTSChildren) {
 				if(!verifyFTS(pFTSChildren)) {
-					display_one(pFTSChildren, len);
+					if(!prepareBuf(pCache, pFTSChildren, len))
+						display_one(pFTSChildren, len);
 				}
 				pFTSChildren = pFTSChildren -> fts_link;
 		
 			}
+			display_mul(pCache, len);
+			free(pCache);
 		(void)printf("\n");			
 		}
 	}
 	fts_close(pFTS);
-	
+	return ;
 }	
 
 
