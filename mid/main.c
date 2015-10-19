@@ -149,13 +149,22 @@ void traverse(int argc, char* argv[], int options) {
 		}
 		pFTSChildren = pFTSChildren->fts_link;
 	}
-	printf("\n");
+	
+	if(flg_printBefore)
+		printf("\n");
 	
  
 	while((pFTSRead = fts_read(pFTS)) != NULL) {
 		// traverse directory
 		if(verifyFTS(pFTSRead)) 
 			continue;
+		
+		if(pFTSRead->fts_level != 0 && pFTSRead->fts_name[0] == '.'
+				&& !flg_dot) {
+			fts_set(pFTS, pFTSRead, FTS_SKIP);
+			continue;
+		}		
+
 		if(pFTSRead->fts_level == 0 && pFTSRead->fts_info == FTS_D) {
 		
 			pFTSChildren = fts_children(pFTS, 0);
@@ -163,11 +172,9 @@ void traverse(int argc, char* argv[], int options) {
 				continue;
 			len = getLength(pFTSChildren);
 		
-			if(argc > 1) {
-				if(flg_printBefore)
+			if(argc > 1 || flg_R || flg_printBefore) 
 				( void)printf("%s:\n",
 					 pFTSChildren->fts_parent->fts_accpath);
-				}
 	
 			if(flg_s) {
 				pBuf = resetBlock(len.total_b);
@@ -182,7 +189,7 @@ void traverse(int argc, char* argv[], int options) {
 				pFTSChildren = pFTSChildren -> fts_link;
 			
 			}
-		(void)printf("haha\n");
+			printf("\n");
 		}
 	//	if(pFTSRead->fts_level > 0&& pFTSRead->fts_accpath[0] != '.')	
 	//		printf("%s\n ", pFTSRead->fts_accpath);
@@ -194,10 +201,10 @@ void traverse(int argc, char* argv[], int options) {
 				continue;
 			len = getLength(pFTSChildren);
 			//avoid sub dir begin with '.'
-			pBuf = strchr(pFTSChildren->fts_path,'/');
+/*			pBuf = strchr(pFTSChildren->fts_path,'/');
 			if(pBuf[1] == '.' && !flg_dot) 
 				continue;
-
+*/
 			(void)printf("%s:\n", pFTSChildren->fts_path);
 			
 			if(flg_s) {

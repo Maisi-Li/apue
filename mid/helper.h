@@ -19,7 +19,7 @@ int compare(const FTSENT **, const FTSENT **);
 Length getLength(const FTSENT *pChild);
 
 char* resetBlock( uint64_t);
-void resetSize(char*, uint64_t);
+char* resetSize(uint64_t);
 double humanizeNumber(double, char*);
 
 char* displayTime(time_t time);

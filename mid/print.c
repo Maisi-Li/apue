@@ -13,7 +13,7 @@
 
 void display_one(FTSENT *pChild, Length len) {
 	struct stat *pStat = {0};
-	char* pBuf = calloc(1024, sizeof(char));
+	char* pBuf = NULL;
 	char pMode[12];
 	struct passwd *pUid = NULL;
 	struct group *pGid = NULL;
@@ -32,6 +32,7 @@ void display_one(FTSENT *pChild, Length len) {
 	if(flg_s) {
 		pBuf = resetBlock(pStat->st_blocks);
 		(void) printf("%*s ", len.l_blocks, pBuf);
+		free(pBuf);
 	}	
 	// check long format
 	if(flg_display == in_l || flg_display == in_n) {
@@ -62,8 +63,9 @@ void display_one(FTSENT *pChild, Length len) {
 				len.l_minor, minor(pStat->st_rdev));
 		}
 		else if(flg_h) {
-			resetSize(pBuf, pStat->st_size);	
+			pBuf = resetSize(pStat->st_size);	
 			(void)printf("%*s ",len.l_size,  pBuf);
+			free(pBuf);
 		}
 		else
 			(void)printf("%*zu ",len.l_size, pStat->st_size);
@@ -73,19 +75,24 @@ void display_one(FTSENT *pChild, Length len) {
 			pTime = pStat->st_ctime;
 		if(flg_sort == sortByATime)
 			pTime = pStat->st_atime;
-		(void) printf("%s ", displayTime(pTime));	
+		pBuf = displayTime(pTime);
+		(void) printf("%s ", pBuf);
+		free(pBuf);	
 	}
 
 	//name
-	(void)printf("%s", displayName(pChild->fts_accpath));
+	pBuf = displayName(pChild->fts_accpath);
+	(void)printf("%s", pBuf);
+	free(pBuf);
 	// -F
 	if(flg_F) 
-		(void) printf("%c ", displayChar(pMode));
-
+		(void)printf("%c ", displayChar(pMode));
 	//symbolic link 
-	if((flg_display == in_l || flg_display == in_n) && pMode[0] == 'l')
-		(void) printf("%s",displayLink(pChild));
-
+	if((flg_display == in_l || flg_display == in_n) && pMode[0] == 'l') {
+		pBuf = displayLink(pChild);
+		(void) printf("%s", pBuf);
+		free(pBuf);
+	}
 
 	(void)printf("\n");
 }

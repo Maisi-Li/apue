@@ -108,7 +108,8 @@ Length getLength(const FTSENT *pChild) {
 	char *pColumns = NULL;
 	Length s_length = {0};
 	int temp_len = 0;
-	char* pBuf = calloc(1024, sizeof(char));
+	char* pBuf = NULL;
+	char aBuf[1024];
 	struct stat *tempStat = {0};
 	struct passwd *pUid = NULL;
 	struct group *pGid = NULL;
@@ -116,7 +117,7 @@ Length getLength(const FTSENT *pChild) {
 
 	uint64_t maxSize = 0;
 	uint64_t maxBlock = 0;
-
+	bzero(aBuf, 1024);
 	pColumns = getenv("COLUMNS");
 	if(pColumns != NULL && atoi(pColumns) > 0) 
 		windowWidth = atoi(pColumns);
@@ -149,7 +150,7 @@ Length getLength(const FTSENT *pChild) {
 			// get uid
 			pUid = getpwuid(tempStat->st_uid);
 			if(flg_display == in_n || pUid == NULL)	{
-				(void)snprintf(pBuf, sizeof(pBuf),"%u",
+				(void)snprintf(aBuf, sizeof(aBuf),"%u",
 					tempStat->st_uid);
 				temp_len = strlen(pBuf);
 			}
@@ -161,7 +162,7 @@ Length getLength(const FTSENT *pChild) {
 			//get gid
 			pGid = getgrgid(tempStat->st_gid);			
 			if(flg_display == in_n || pUid == NULL)	{
-				(void)snprintf(pBuf, sizeof(pBuf),"%u",
+				(void)snprintf(aBuf, sizeof(aBuf),"%u",
 					tempStat->st_gid);
 				temp_len = strlen(pBuf);
 			}
@@ -217,12 +218,13 @@ Length getLength(const FTSENT *pChild) {
 	}
 	else if(flg_display == in_l || flg_display == in_n) {
 		if(flg_h) {
-			resetSize(pBuf, maxSize);
+			pBuf = resetSize(maxSize);
 			s_length.l_size = strlen(pBuf);
+			free(pBuf);
 		}
 		else {
 			s_length.l_size = 
-				snprintf(pBuf, sizeof(pBuf), "%zu", maxSize);
+				snprintf(aBuf, sizeof(aBuf), "%zu", maxSize);
 		}
 	}
 		
@@ -231,7 +233,7 @@ Length getLength(const FTSENT *pChild) {
 		pBuf = resetBlock(maxBlock);
 		//printf("MaxBlockSize: %s\n", pBuf);		
 		s_length.l_blocks = strlen(pBuf);
-		
+		free(pBuf);
 	}
 		
 	
@@ -244,7 +246,6 @@ Length getLength(const FTSENT *pChild) {
 		s_length.column += 1;
 	
 	//printf("finish!\n");
-	free(pBuf);
 	return s_length;
 }
 
@@ -257,9 +258,10 @@ int getIntLength(int a)	{
 	return l;
 }
 
-void resetSize(char* pBuf, uint64_t size) {
+char* resetSize(uint64_t size) {
 	char unit = ' ';
 	double num = 0;
+	char* pBuf = calloc(1024, sizeof(char));
 	num = humanizeNumber(size*1.0,&unit);
 	if(unit == ' ')
 		snprintf(pBuf, sizeof(pBuf), "%d",(int) num);
@@ -267,6 +269,7 @@ void resetSize(char* pBuf, uint64_t size) {
 		snprintf(pBuf, sizeof(pBuf), "%0.1f%c", num, unit);
 	else
 		snprintf(pBuf, sizeof(pBuf),"%d%c", (int)num, unit);
+	return pBuf;
 }
 
 
