@@ -27,4 +27,9 @@ char displayChar(char*);
 char* displayLink(FTSENT *pChild);
 int verifyFTS(FTSENT*);
 char* displayName(char* );
+
+void createBuf(char ***pBuf, Length len);
+void freeBuf(char **pBuf);
+int  prepareBuf(char **pCache, FTSENT* pChild, Length len);
+
 #endif

@@ -66,4 +66,6 @@ extern int flg_i;
 extern int flg_dot;
 extern int flg_d;
 extern int flg_printBefore;
+extern int pCacheCount;
+extern char** pCache;
 #endif

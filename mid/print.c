@@ -6,11 +6,34 @@
 #include<grp.h>
 #include<bsd/string.h>
 #include<time.h>
+#include<math.h>
 #include "ls.h"
 #include "helper.h"
 #include "print.h"
 
+void display_mul(char** pCache, Length len) {
+	if(flg_display != in_C && flg_display != in_x)
+		return ;
+	int i = 0;
+	int row = 0;
+	int num = windowWidth/(len.column + 1);
+	if(num == 0)
+		num = 1;
+	if(flg_display == in_x) {
+		for(i = 0; i < pCacheCount; i++) {
+			(void) printf("%s ", pCache[i]);
+			if((i + 1)%num == 0) 
+				(void) printf("\n");
+		}
+		printf("\n");
+	}
 
+	if(flg_display == in_C) {
+		row = (int)ceil(pCacheCount*1.0 / num);
+	
+}
+	pCacheCount = 0;
+}
 void display_one(FTSENT *pChild, Length len) {
 	struct stat *pStat = {0};
 	char* pBuf = NULL;

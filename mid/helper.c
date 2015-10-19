@@ -14,13 +14,88 @@
 #include<time.h>
 //#include<limit.h>
 #include<err.h>
+#include<bsd/string.h>
+#include <sys/ioctl.h>
 #include "ls.h"
 #include "helper.h"
 
 int compareByMethod(struct stat* a, struct stat* b);
 int getIntLength(int);
 //
-int windowWidth; // default width 
+int windowWidth; // default width
+
+int prepareBuf(char **pCache, FTSENT* pChild, Length len) {
+	
+	char pEntryBuf[NAME_MAX + 1];
+	char *pTemp = NULL;
+	struct stat *pStat = {0};
+	char pMode[12];
+	bzero(pEntryBuf, NAME_MAX + 1); 
+	pStat = pChild->fts_statp;
+	bzero(pMode, 12);
+	if(flg_display != in_C && flg_display != in_x)
+		return 0;
+	
+	if(!flg_dot && pChild->fts_name[0] == '.')
+		return 1;
+	
+	pCache[pCacheCount] = (char*) calloc(len.column + 1, sizeof(char *));
+	
+	strmode(pStat->st_mode, pMode);
+	// inode 
+	if(flg_i) {
+		(void) snprintf(pEntryBuf, sizeof(pEntryBuf), 
+				"%*lu ",len.l_ino,pStat->st_ino);
+		(void) strcat(pCache[pCacheCount], pEntryBuf);
+	}
+	// block
+	if(flg_s) {
+		pTemp = resetBlock(pStat->st_blocks);
+		(void) snprintf(pEntryBuf, sizeof(pEntryBuf),
+				"%*s ", len.l_blocks, pTemp);
+		(void) strcat(pCache[pCacheCount], pEntryBuf);
+		free(pTemp);
+	}
+	// name
+	pTemp = displayName(pChild->fts_accpath);
+	(void) snprintf(pEntryBuf, sizeof(pEntryBuf), 
+				"%-*s",len.l_name, pTemp);
+	(void) strcat(pCache[pCacheCount], pEntryBuf);
+	free(pTemp);
+	// -F
+
+	if(flg_F) {
+		(void) snprintf(pEntryBuf, sizeof(pEntryBuf),
+				"%c ", displayChar(pMode));
+		(void) strcat(pCache[pCacheCount], pEntryBuf);
+	}
+//	printf("pre: %s\n", pCache[pCacheCount]);
+	pCacheCount++;
+	return (1);
+}
+ 
+void createBuf(char ***pBuf, Length len) {
+	if(flg_display != in_C && flg_display != in_x)
+		return ;
+	if((*pBuf = (char **) calloc(len.count + 1, sizeof(char *))) == NULL)
+		err(1, "No memory available. \n");
+
+
+}
+
+void freeBuf(char **pBuf) {
+	if(flg_display != in_C && flg_display != in_x)
+		return;
+	char **temp = pBuf;
+	while(*temp != NULL) {
+		free(*temp);
+		*temp = NULL;
+		temp++;
+	}
+	free(pBuf);
+
+}
+
 
 char* displayName(char* name) {
 	char* pBuf = calloc(NAME_MAX + 1, sizeof(char));
@@ -47,6 +122,7 @@ int verifyFTS(FTSENT* pFTS) {
 	case FTS_DNR:warn("%s: A directory which cannot be read.\n"
 				, pFTS->fts_name); return (1);
 	case FTS_ERR:warn( "%s: ", pFTS->fts_name); return (1);
+	case FTS_NS: warn("%s: ",pFTS->fts_name); return(1);
 	}
 	return 0;
 
@@ -105,7 +181,7 @@ char* displayTime(time_t before) {
 
 
 Length getLength(const FTSENT *pChild) {
-	char *pColumns = NULL;
+//	char *pColumns = NULL;
 	Length s_length = {0};
 	int temp_len = 0;
 	char* pBuf = NULL;
@@ -113,15 +189,18 @@ Length getLength(const FTSENT *pChild) {
 	struct stat *tempStat = {0};
 	struct passwd *pUid = NULL;
 	struct group *pGid = NULL;
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	int hasDevice = 0;
 
 	uint64_t maxSize = 0;
 	uint64_t maxBlock = 0;
 	bzero(aBuf, 1024);
-	pColumns = getenv("COLUMNS");
-	if(pColumns != NULL && atoi(pColumns) > 0) 
-		windowWidth = atoi(pColumns);
-
+	
+	//pColumns = getenv("COLUMNS");
+//	if(pColumns != NULL && atoi(pColumns) > 0) 
+		windowWidth = w.ws_col;
+//	printf("Column: %d\n", w.ws_col);
 	while(pChild != NULL) {
 		if(!flg_dot && pChild->fts_name[0] == '.') {
 			pChild = pChild->fts_link;

@@ -45,6 +45,9 @@ int flg_dot = 0;
 int flg_d = 0;
 int flg_printBefore = 0;
 char* pBuf;
+
+char** pCache = NULL;
+int pCacheCount = 0;
 int main(int argc,char *argv[]) {
 
 	char* currentPath[] = {".",NULL};
@@ -59,7 +62,12 @@ int main(int argc,char *argv[]) {
 	if(!isatty(STDOUT_FILENO)) {
 		flg_display = in_1;
 		flg_nonPrintable = in_w;
-}
+	}
+	else {
+		flg_display = in_C;
+		flg_nonPrintable = in_q;
+	}
+		
 	
         while((opt = getopt(argc, argv, "1ACFLRSTWacdfghiklmnopqrstuwx")) != -1) {
                 switch(opt) {
@@ -125,34 +133,39 @@ void traverse(int argc, char* argv[], int options) {
 		err(1,":traverse :before getLength ");
 	
 	len = getLength(pFTSChildren);
-	//display_one(pFTSChildren, len);
-
-
 	//1. print operand as file 
+	createBuf(&pCache, len);
 	if(flg_d) {
 		while(pFTSChildren != NULL) {
 			if(!verifyFTS(pFTSChildren)) {
+				if(!prepareBuf(pCache, pFTSChildren, len))
 				display_one(pFTSChildren, len);
 			}	
 			pFTSChildren = pFTSChildren->fts_link;
 		}	
+		display_mul(pCache, len);
+		freeBuf(pCache);
+		(void)fts_close(pFTS);
 		return ;
 		
 	}
+
 	//only traverse file
+	createBuf(&pCache,len);
 	pFTSChildren = pFTSTemp;
 	while(pFTSChildren != NULL) {
 		if(!verifyFTS(pFTSChildren) && 
 				!S_ISDIR(pFTSChildren->fts_statp->st_mode)) {
+			if(!prepareBuf(pCache, pFTSChildren, len))
 			display_one(pFTSChildren, len);
 			flg_printBefore = 1;
 		}
 		pFTSChildren = pFTSChildren->fts_link;
 	}
-	
+	display_mul(pCache,len);
 	if(flg_printBefore)
 		printf("\n");
-	
+	freeBuf(pCache);
  
 	while((pFTSRead = fts_read(pFTS)) != NULL) {
 		// traverse directory
@@ -171,7 +184,7 @@ void traverse(int argc, char* argv[], int options) {
 			if(verifyFTS(pFTSChildren))
 				continue;
 			len = getLength(pFTSChildren);
-		
+			createBuf(&pCache, len);
 			if(argc > 1 || flg_R || flg_printBefore) 
 				( void)printf("%s:\n",
 					 pFTSChildren->fts_parent->fts_accpath);
@@ -182,13 +195,16 @@ void traverse(int argc, char* argv[], int options) {
 			}
 			while(pFTSChildren) {
 				if(!verifyFTS(pFTSChildren)) {
-					display_one(pFTSChildren, len);
-					flg_printBefore = 1;
+					if(!prepareBuf(pCache, pFTSChildren, len))
+						display_one(pFTSChildren, len);
+						flg_printBefore = 1;
 
 				}
 				pFTSChildren = pFTSChildren -> fts_link;
 			
 			}
+			display_mul(pCache, len);
+			free(pCache);
 			printf("\n");
 		}
 	//	if(pFTSRead->fts_level > 0&& pFTSRead->fts_accpath[0] != '.')	
