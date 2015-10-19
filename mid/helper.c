@@ -22,9 +22,23 @@ int getIntLength(int);
 //
 int windowWidth; // default width 
 
+char* displayName(char* name) {
+	char* pBuf = calloc(NAME_MAX + 1, sizeof(char));
+	int i = 0;
+	for( i = 0; name[i] != '\0'; i++) {
+		if(flg_nonPrintable == in_q && name[i] < 32)
+			pBuf[i] = '?';
+		else
+			pBuf[i] = name[i];
+	}
+	
+	pBuf[i] = '\0';
+	return pBuf;
+
+}
+
 int verifyFTS(FTSENT* pFTS) {
-	if(errno) {
-		err(1, "%s: ", pFTS->fts_name);
+	if(!pFTS) {
 		return(1);
 	}
 	switch(pFTS->fts_info) {
@@ -32,7 +46,7 @@ int verifyFTS(FTSENT* pFTS) {
 				, pFTS->fts_name); return (1);
 	case FTS_DNR:warn("%s: A directory which cannot be read.\n"
 				, pFTS->fts_name); return (1);
-	case FTS_ERR:err(1, "%s: ", pFTS->fts_name); return (1);
+	case FTS_ERR:warn( "%s: ", pFTS->fts_name); return (1);
 	}
 	return 0;
 
@@ -53,7 +67,7 @@ char* displayLink(FTSENT* pChild) {
 	if(len == -1) 
 		warn( "displayLink: readlink: ");
 	pPath[len] = '\0';
-	(void) snprintf(pBuf, sizeof(pBuf), "-> %s", pPath);
+	(void) snprintf(pBuf, sizeof(pBuf), "-> %s", displayName(pPath));
 	return pBuf;
 }
 
@@ -108,11 +122,11 @@ Length getLength(const FTSENT *pChild) {
 		windowWidth = atoi(pColumns);
 
 	while(pChild != NULL) {
-/*		if(!flg_dot && pChild->fts_name[0] == '.') {
+		if(!flg_dot && pChild->fts_name[0] == '.') {
 			pChild = pChild->fts_link;
 			continue;
 		}
-*/			
+			
 		
 		s_length.count++;
 		
@@ -190,7 +204,7 @@ Length getLength(const FTSENT *pChild) {
 		//printf
 		pChild = pChild->fts_link;
 	}// end while
-
+	
 	// count length
 	s_length.l_ino = getIntLength(s_length.l_ino);
 	s_length.l_nlink = getIntLength(s_length.l_nlink);
@@ -230,7 +244,7 @@ Length getLength(const FTSENT *pChild) {
 		s_length.column += 1;
 	
 	//printf("finish!\n");
-
+	free(pBuf);
 	return s_length;
 }
 
@@ -326,7 +340,7 @@ int compare (const FTSENT** a, const FTSENT** b) {
 	if((result = compareByMethod((*a)->fts_statp, (*b)->fts_statp)) == 0)
 		result = strcmp((*a)->fts_name, (*b)->fts_name);
 	 
-	return (flg_R ? -1*result:result);
+	return (flg_reverse ? -1*result:result);
 }
 
 int compareByMethod(struct stat* a, struct stat* b) {

@@ -22,7 +22,8 @@ void display_one(FTSENT *pChild, Length len) {
 	bzero(pMode, 12);
 	pStat = pChild->fts_statp;
 	// check a
-	
+	if(!flg_dot && pChild->fts_name[0] == '.')
+		return;	
 
 	// check inode
 	if(flg_i)
@@ -76,7 +77,7 @@ void display_one(FTSENT *pChild, Length len) {
 	}
 
 	//name
-	(void)printf("%s", pChild->fts_accpath);
+	(void)printf("%s", displayName(pChild->fts_accpath));
 	// -F
 	if(flg_F) 
 		(void) printf("%c ", displayChar(pMode));

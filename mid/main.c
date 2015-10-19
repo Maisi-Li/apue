@@ -23,7 +23,8 @@ int flg_a = 0;
 
 // sorting flag
 SortingMethod flg_sort = sortByName;
-int flg_noSort = 0; 
+int flg_noSort = 0;
+int flg_reverse = 0; 
 int flg_R = 0;
 
 // Display flag, default output would be terminal 
@@ -60,7 +61,7 @@ int main(int argc,char *argv[]) {
 		flg_nonPrintable = in_w;
 }
 	
-        while((opt = getopt(argc, argv, "1ABCFLRSTWabcdfghiklmnopqrstuwx")) != -1) {
+        while((opt = getopt(argc, argv, "1ACFLRSTWacdfghiklmnopqrstuwx")) != -1) {
                 switch(opt) {
 		case '1': flg_display = in_1; break;
 		case 'a': flg_a = 1; break;
@@ -76,6 +77,7 @@ int main(int argc,char *argv[]) {
 		case 'l': flg_display = in_l; break;
 		case 'n': flg_display = in_n; break;
 		case 'q': flg_nonPrintable = in_q; break;
+		case 'r': flg_reverse = 1; break;
 		case 'R': flg_R = 1; break;
 		case 's': flg_s = 1; break;
                 case 'S': flg_sort = sortBySize; break;
@@ -126,20 +128,7 @@ void traverse(int argc, char* argv[], int options) {
 	//display_one(pFTSChildren, len);
 
 
-	// 1. display non-directory oprands
-/*	while(pFTSChildren != NULL) {
-		if(!verifyFTS(pFTSChildren) && 
-				!S_ISDIR(pFTSChildren->fts_statp->st_mode)) {
-			display_one(pFTSChildren, len);
-			flg_printBefore = 1;
-		}
-		pFTSChildren = pFTSChildren->fts_link;
-		
-	}
-*/
-
 	//1. print operand as file 
-//	pFTSChildren = pFTSTemp;
 	if(flg_d) {
 		while(pFTSChildren != NULL) {
 			if(!verifyFTS(pFTSChildren)) {
@@ -150,7 +139,7 @@ void traverse(int argc, char* argv[], int options) {
 		return ;
 		
 	}
-	//only print file
+	//only traverse file
 	pFTSChildren = pFTSTemp;
 	while(pFTSChildren != NULL) {
 		if(!verifyFTS(pFTSChildren) && 
@@ -160,39 +149,74 @@ void traverse(int argc, char* argv[], int options) {
 		}
 		pFTSChildren = pFTSChildren->fts_link;
 	}
-
+	printf("\n");
 	
-	// 
+ 
 	while((pFTSRead = fts_read(pFTS)) != NULL) {
-
-		if(verifyFTS(pFTSRead) ||
-			pFTSRead->fts_level != 0 || pFTSRead->fts_info != FTS_D)
+		// traverse directory
+		if(verifyFTS(pFTSRead)) 
 			continue;
+		if(pFTSRead->fts_level == 0 && pFTSRead->fts_info == FTS_D) {
 		
-		pFTSChildren = fts_children(pFTS, 0);
-		len = getLength(pFTSChildren);
-		if(argc > 1) {
-			if(flg_printBefore)
-				printf("\n");
-			printf("%s:\n", pFTSChildren->fts_parent->fts_accpath);
+			pFTSChildren = fts_children(pFTS, 0);
+			if(verifyFTS(pFTSChildren))
+				continue;
+			len = getLength(pFTSChildren);
+		
+			if(argc > 1) {
+				if(flg_printBefore)
+				( void)printf("%s:\n",
+					 pFTSChildren->fts_parent->fts_accpath);
+				}
+	
+			if(flg_s) {
+				pBuf = resetBlock(len.total_b);
+				(void)printf("total %s\n",pBuf);
 			}
+			while(pFTSChildren) {
+				if(!verifyFTS(pFTSChildren)) {
+					display_one(pFTSChildren, len);
+					flg_printBefore = 1;
 
-		if(flg_s) {
-			pBuf = resetBlock(len.total_b);
-			printf("total %s\n",pBuf);
+				}
+				pFTSChildren = pFTSChildren -> fts_link;
+			
+			}
+		(void)printf("haha\n");
 		}
-		while(pFTSChildren) {
-			if(!verifyFTS(pFTSChildren)) {
-				display_one(pFTSChildren, len);
-				flg_printBefore = 1;
+	//	if(pFTSRead->fts_level > 0&& pFTSRead->fts_accpath[0] != '.')	
+	//		printf("%s\n ", pFTSRead->fts_accpath);
+		//traverse recursively
+		if(flg_R && pFTSRead->fts_level > 0 && pFTSRead->fts_info == FTS_D) {
+			
+			pFTSChildren = fts_children(pFTS, 0);
+			if(verifyFTS(pFTSChildren))
+				continue;
+			len = getLength(pFTSChildren);
+			//avoid sub dir begin with '.'
+			pBuf = strchr(pFTSChildren->fts_path,'/');
+			if(pBuf[1] == '.' && !flg_dot) 
+				continue;
 
+			(void)printf("%s:\n", pFTSChildren->fts_path);
+			
+			if(flg_s) {
+				pBuf = resetBlock(len.total_b);
+				(void)printf("total %s\n",pBuf);
 			}
-			pFTSChildren = pFTSChildren -> fts_link;
+			while(pFTSChildren) {
+				if(!verifyFTS(pFTSChildren)) {
+					display_one(pFTSChildren, len);
+				}
+				pFTSChildren = pFTSChildren -> fts_link;
 		
+			}
+		(void)printf("\n");			
 		}
 	}
 	fts_close(pFTS);
-}
+	
+}	
 
 
 

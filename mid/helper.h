@@ -26,4 +26,5 @@ char* displayTime(time_t time);
 char displayChar(char*);
 char* displayLink(FTSENT *pChild);
 int verifyFTS(FTSENT*);
+char* displayName(char* );
 #endif

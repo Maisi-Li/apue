@@ -49,7 +49,7 @@ typedef struct {
 
 extern SortingMethod flg_sort;
 extern int flg_noSort;
-extern int flg_R;
+extern int flg_reverse;
 
 extern DisplayFormat flg_display;
 extern NonPrintableMethod flg_nonPrintable;
@@ -57,6 +57,7 @@ extern NonPrintableMethod flg_nonPrintable;
 extern Length fileLength;
 extern int windowWidth;
 
+extern int flg_R;
 extern int flg_h;
 extern int flg_s;
 extern Block flg_block;
