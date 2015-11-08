@@ -24,6 +24,9 @@ void usage();
 void initialization();	
 int main( int argc, char* argv[]) {
 	int c;
+	
+	initialization();
+
 	while((c = getopt(argc, argv, "dhc:i:l:p:")) != -1) {
 		switch(c) {
 			case 'd':
