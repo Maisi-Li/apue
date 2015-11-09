@@ -21,13 +21,14 @@ void *get_in_addr(struct sockaddr *sa)
 }
 
 void startServer() {
-	int sockfd, recvfd;
+	int sockfd[2] = {0,0};
+	int recvfd;
 	struct addrinfo hints, *serverinfo, *p;
 	struct sockaddr_storage their_addr;
 	socklen_t sin_size;
 	int temp;
 	char pIP[INET6_ADDRSTRLEN];
-	memset(&hints, 0, sizeof hints);
+	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
@@ -36,41 +37,51 @@ void startServer() {
 		fprintf(stderr,"getaddrinfo: %s\n", gai_strerror(temp));
 		exit(1);
 	}
-	temp = 0;
-
-	for(p = serverinfo; p != NULL; p = p->ai_next) {
-		if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+	int i = 0;
+	for(p = serverinfo; p != NULL; p = p->ai_next, i++) {
+		if((sockfd[i] = socket(p->ai_family, 
+				p->ai_socktype, 0)) == -1) {
+			fprintf(stderr, "socket: %s\n", strerror(errno));
 			continue;
 		}
 		//fprintf(stdout, "ip:%s\n",p->ai_addr->sa_data);
-		if(bind(sockfd,p->ai_addr, p->ai_addrlen == 0)) {
-			break;
+		temp = 1;
+		if(setsockopt(sockfd[i], SOL_SOCKET, SO_REUSEADDR,
+				 &temp, sizeof(temp)) == -1) {
+			fprintf(stderr,"setsockopt: %s\n", strerror(errno));
+			exit(1);
+          	}	
+
+		if(bind(sockfd[i],p->ai_addr, p->ai_addrlen) == 0) {
+		//		inet_ntop(p->ai_family, get_in_addr(p->ai_addr),
+		//		 pIP, sizeof(pIP));
+		//	fprintf(stderr,"bind ip: %s port: %s\n", pIP,server_port );
+			continue;
 		} 
 	}
+		if(listen(sockfd[1],100) == -1) {
+			fprintf(stderr, "listen: %s\n", strerror(errno));
+			exit(1);
+		}
+	
+
 
 	freeaddrinfo(serverinfo);
 
-	if(p == NULL) {
-		fprintf(stderr,"socket or bind");
-		exit(1);
-	} 
-
-	if(listen(sockfd,100) == -1) {
-		fprintf(stderr, "listen: %s\n", strerror(errno));
-		exit(1);
-	}	
-	
 	while(1) {
 		sin_size = sizeof(their_addr);
-		recvfd = accept(sockfd, (struct sockaddr *) &their_addr, &sin_size);
+		recvfd = accept(sockfd[1], (struct sockaddr *) &their_addr, &sin_size);
 		if(recvfd == -1) {
-			fprintf(stderr, "accept error");
-			continue;
+			fprintf(stderr, "accept error: %s\n", strerror(errno));
+			break;
 		}		
-
-		inet_ntop(their_addr.ss_family,
+		
+		if(inet_ntop(their_addr.ss_family,
 				get_in_addr((struct sockaddr *)&their_addr),
-				pIP, sizeof pIP);
+				pIP, sizeof pIP) == NULL) {
+			fprintf(stderr, "inet_ntop\n");
+			continue;	
+		}
 		printf("got connection from %s\n",pIP);
 	}
 }
